@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .app-canvas {
+    background: radial-gradient(ellipse at 12% -18%, #e4ecff 0%, transparent 57%),
+      radial-gradient(ellipse at 92% 0%, #edf8fb 0%, transparent 48%), #f4f7fc;
+  }
+
+  .brand-mark {
+    background: linear-gradient(145deg, #4e6ce4, #3451ca 78%);
+    box-shadow: inset 0 1px 0 #ffffff38, 0 5px 13px -5px #3451ca80;
+  }
+
+  .workspace-surface {
+    box-shadow: 0 1px 2px #16234306, 0 18px 42px -31px #273e6d6e;
+  }
+
+  .workspace-rail {
+    background: linear-gradient(160deg, #f2f6ff 0%, #f8faff 46%, #f6f8fc 100%);
+  }
+
+  .conversation-intro-surface {
+    background: radial-gradient(ellipse at 95% 0%, #eaf2ff 0%, transparent 73%),
+      linear-gradient(155deg, #f9fbff, #fff 76%);
+  }
+
+  .auth-story {
+    background: radial-gradient(ellipse at 90% 5%, #3655b8 0%, transparent 63%),
+      radial-gradient(ellipse at 0% 100%, #243d88 0%, transparent 69%), #172750;
+  }
+
+  .auth-story::before {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(#b8cbff15 1px, transparent 1px),
+      linear-gradient(90deg, #b8cbff15 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(145deg, transparent 32%, #000 100%);
+    pointer-events: none;
+    content: '';
+  }
+}
+
+@layer utilities {
+  /* Horizontal chip rows scroll without a visible scrollbar */
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}

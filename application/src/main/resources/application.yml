@@ -1,0 +1,45 @@
+server:
+  address: ${AUDIT_BIND:127.0.0.1}
+  port: ${AUDIT_PORT:8080}
+  tomcat:
+    threads:
+      max: 48
+  error:
+    include-message: never
+spring:
+  threads.virtual.enabled: true
+  main.keep-alive: true
+  datasource:
+    url: ${AUDIT_JDBC_URL:jdbc:mysql://127.0.0.1:3306/report_audit?connectionTimeZone=UTC}
+    username: ${AUDIT_DB_USER:report}
+    password: ${AUDIT_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+      transaction-isolation: TRANSACTION_READ_COMMITTED
+  data:
+    redis:
+      host: ${AUDIT_REDIS_HOST:127.0.0.1}
+      port: ${AUDIT_REDIS_PORT:6379}
+      timeout: 400ms
+      connect-timeout: 400ms
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 9MB
+management:
+  endpoints.web.exposure.include: health,metrics
+  health.redis.enabled: ${AUDIT_REDIS_ENABLED:true}
+audit:
+  agent-url: ${AUDIT_AGENT_URL:http://127.0.0.1:8000}
+  agent-token: ${AUDIT_AGENT_TOKEN:}
+  redis-enabled: ${AUDIT_REDIS_ENABLED:true}
+  worker-enabled: ${AUDIT_WORKER_ENABLED:true}
+  worker-count: ${AUDIT_WORKER_COUNT:2}
+  worker-poll-ms: ${AUDIT_WORKER_POLL_MS:350}
+  cors-origin: ${AUDIT_WEB_ORIGIN:http://127.0.0.1:5173}
+  chat-per-minute: ${AUDIT_CHAT_PER_MINUTE:30}
+health:
+  agent-url: ${HEALTH_AGENT_URL:http://127.0.0.1:8000}
+  agent-token: ${HEALTH_AGENT_TOKEN:}
+  chat-concurrency: ${HEALTH_CHAT_CONCURRENCY:8}
+  secure-cookie: ${HEALTH_SECURE_COOKIE:true}

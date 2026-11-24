@@ -1,0 +1,14 @@
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --locked --no-dev --no-install-project
+COPY report_audit report_audit
+COPY rag rag
+COPY agents agents
+COPY voice voice
+COPY skills skills
+COPY main.py observability.py ./
+RUN useradd -m -u 10001 audit && install -d -o audit -g audit /var/lib/report-reading
+USER 10001
+ENV PATH="/app/.venv/bin:$PATH"

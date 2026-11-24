@@ -1,0 +1,119 @@
+name: medical-report-audit
+
+x-java: &java
+  build: ./application
+  environment: &java-env
+    AUDIT_AGENT_URL: http://agent:8000
+    AUDIT_AGENT_TOKEN: ${AUDIT_AGENT_TOKEN:?Set AUDIT_AGENT_TOKEN}
+    AUDIT_JDBC_URL: jdbc:mysql://mysql:3306/report_audit?connectionTimeZone=UTC
+    AUDIT_DB_USER: report
+    AUDIT_DB_PASSWORD: ${AUDIT_DB_PASSWORD:?Set AUDIT_DB_PASSWORD}
+    AUDIT_REDIS_HOST: redis
+  depends_on: &java-dependencies
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    agent:
+      condition: service_healthy
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: report_audit
+      MYSQL_USER: report
+      MYSQL_PASSWORD: ${AUDIT_DB_PASSWORD:?Set AUDIT_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${AUDIT_MYSQL_ROOT_PASSWORD:?Set AUDIT_MYSQL_ROOT_PASSWORD}
+    volumes:
+      - reports:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", 'mysql -h 127.0.0.1 -u "$$MYSQL_USER" -p"$$MYSQL_PASSWORD" "$$MYSQL_DATABASE" -e "SELECT 1" >/dev/null 2>&1']
+      interval: 5s
+      timeout: 4s
+      retries: 24
+  redis:
+    image: redis:7.4-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  knowledge:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.audit
+    command: ["uvicorn", "report_audit.mcp_server:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      VECTOR_STORE: memory
+      REPORT_AUDIT_KNOWLEDGE: ${REPORT_AUDIT_KNOWLEDGE:-0}
+  agent:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.audit
+    command: ["uvicorn", "report_audit.agent_service:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      AUDIT_AGENT_TOKEN: ${AUDIT_AGENT_TOKEN:?Set AUDIT_AGENT_TOKEN}
+      AUDIT_MCP_URL: http://knowledge:8000/mcp
+      REPORT_AUDIT_LLM_ROUTER: ${REPORT_AUDIT_LLM_ROUTER:-0}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ark}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+    depends_on:
+      - knowledge
+    healthcheck: &agent-healthcheck
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).close()"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+  health-agent:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.audit
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      HEALTH_AGENT_TOKEN: ${HEALTH_AGENT_TOKEN:-${AUDIT_AGENT_TOKEN}}
+      AUDIT_READING_CHECKPOINT_DB: /var/lib/report-reading/checkpoints.sqlite
+      LLM_PROVIDER: ${LLM_PROVIDER:-ark}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      REPORT_READING_PROVIDER: ${REPORT_READING_PROVIDER:-}
+      REPORT_READING_API_KEY: ${REPORT_READING_API_KEY:-}
+      REPORT_READING_MODEL: ${REPORT_READING_MODEL:-}
+      REPORT_READING_BASE_URL: ${REPORT_READING_BASE_URL:-}
+      VISION_PROVIDER: ${VISION_PROVIDER:-}
+      VISION_API_KEY: ${VISION_API_KEY:-}
+      VISION_MODEL: ${VISION_MODEL:-}
+      VISION_BASE_URL: ${VISION_BASE_URL:-}
+      VECTOR_STORE: memory
+      RAG_WARMUP: "0"
+    volumes:
+      - reading-checkpoints:/var/lib/report-reading
+    healthcheck: *agent-healthcheck
+  application:
+    <<: *java
+    depends_on:
+      <<: *java-dependencies
+      health-agent:
+        condition: service_healthy
+    environment:
+      <<: *java-env
+      AUDIT_BIND: 0.0.0.0
+      AUDIT_WEB_ORIGIN: ${AUDIT_WEB_ORIGIN:-http://127.0.0.1:5173}
+      AUDIT_WORKER_ENABLED: "false"
+      HEALTH_AGENT_URL: http://health-agent:8000
+      HEALTH_AGENT_TOKEN: ${HEALTH_AGENT_TOKEN:-${AUDIT_AGENT_TOKEN}}
+      HEALTH_SECURE_COOKIE: ${HEALTH_SECURE_COOKIE:-false}
+    ports:
+      - "127.0.0.1:8080:8080"
+  worker:
+    <<: *java
+    environment:
+      <<: *java-env
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      AUDIT_WORKER_COUNT: "2"
+volumes:
+  reports:
+  reading-checkpoints:

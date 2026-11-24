@@ -1,0 +1,48 @@
+# node modules
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+.env
+.env.*
+!.env.example
+
+# os
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# tools
+.cursorrules
+.agent/
+.deepeval/
+# RAG vector store (auto-generated, rebuild with: python -m rag.ingest)
+backend/rag/chroma_db/
+backend/rag/faiss_index/
+
+# LangGraph sqlite checkpointer (CHECKPOINTER=sqlite)
+backend/checkpoints.sqlite*
+backend/report-reading-checkpoints.sqlite*
+
+# Local synthetic report audit snapshots
+backend/report_audit.sqlite3*
+
+# Java application build and local database
+/application/target/
+/application/data/
+
+# Local reports and browser debug output
+/medical/
+/frontend/review_screenshots/
+*.log
