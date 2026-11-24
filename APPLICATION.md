@@ -1,6 +1,6 @@
 # 检验报告异步审核与证据问答平台
 
-这是基于 [Smart Health Assistant](https://github.com/wananing/Smart-Health-Assistant) MIT 源码深度二次开发的账号主版。项目重新设计了前端入口、账号会话和报告审核流程。应用层使用 Java 21 和 Spring Boot，智能体服务使用 Python、FastAPI、LangGraph 和 LangChain。项目使用内置模拟病历。
+账号版提供登录、会话管理、报告解读和审核记录。应用层使用 Java 21 和 Spring Boot，智能体服务使用 Python、FastAPI、LangGraph 和 LangChain。审核演示使用内置模拟病历。
 
 | 组件 | 责任 |
 | --- | --- |

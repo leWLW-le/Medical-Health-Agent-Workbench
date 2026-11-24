@@ -1,6 +1,6 @@
 ## 检验报告核对工作台
 
-工作台属于基于 [Smart Health Assistant](https://github.com/wananing/Smart-Health-Assistant) MIT 源码深度二次开发的账号主项目，上游基线为 `24f749b`。账号版启动方式见 [应用层说明](APPLICATION.md)，上游许可见 [LICENSE](LICENSE)。
+报告工作台支持报告识别、原页校正、指标追问和模拟病历核对。账号版启动方式见[应用层说明](APPLICATION.md)。
 
 ### 账号版报告解读
 

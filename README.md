@@ -2,7 +2,7 @@
 
 # Medical Report Audit Agent
 
-基于开源 [Smart Health Assistant](https://github.com/wananing/Smart-Health-Assistant) MIT 源码深度二次开发的**检验报告核对与证据问答平台**。项目引入账号体系，重构前端入口与会话管理，并将检验报告纳入可追溯的审核流程。上游基线为 `24f749b`。
+**检验报告核对与证据问答平台**。用户可登录账号上传 PDF 或照片，查看体检解读单，对照原报告页校正检验结果，并围绕已核对的指标继续提问。平台按账号保存报告、校正和对话记录。
 
 ## 主项目功能
 
@@ -34,7 +34,3 @@
 - [报告工作台、单机调试和 OCR 评测](REPORT_AUDIT.md)
 - [应用层、账号、异步任务和配置](APPLICATION.md)
 - [LangGraph 运行时](docs/langgraph-runtime.md) · [可观测与 Agent 评估](docs/observability-evals.md)
-
-## 上游署名与许可
-
-本项目基于 Smart Health Assistant 的 MIT 许可源码。上游署名和许可见 [LICENSE](LICENSE)。

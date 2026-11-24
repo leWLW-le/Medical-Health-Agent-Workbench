@@ -2,7 +2,7 @@
 
 # Medical Report Audit Agent
 
-A lab report auditing and evidence Q&A application reworked from the MIT-licensed [Smart Health Assistant](https://github.com/wananing/Smart-Health-Assistant), based on upstream commit `24f749b`. It introduces accounts and reworks the web workspace, conversation management, and report lifecycle.
+A platform for reviewing lab reports and asking questions grounded in report evidence. Users can sign in, upload a PDF or photo, read a patient-friendly summary, correct extracted results against the source page, and ask follow-up questions. Reports, corrections, and conversations are saved to the user’s account.
 
 ## Main application
 
@@ -23,7 +23,3 @@ For standalone OCR and rule development, explicitly set `VITE_AUDIT_ASYNC=0` and
 ## Stack
 
 React, TypeScript, Vite, and Tailwind CSS for the web client. Java 21, Spring Boot, Flyway, MySQL, and Redis for accounts, jobs, and audit versions. Python, FastAPI, LangGraph, PDFium, and RapidOCR for the agents, deterministic checks, and document processing.
-
-## License
-
-See [LICENSE](LICENSE) for the MIT license and upstream attribution.
