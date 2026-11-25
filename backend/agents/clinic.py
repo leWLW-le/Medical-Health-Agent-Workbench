@@ -52,7 +52,7 @@ from skills.emergency_triage.skill import EmergencyTriageSkill
 
 AGENT_ID = "clinic_agent"
 
-CLINIC_SYSTEM_PROMPT = """你是大健康App中的"AI预问诊助手"，态度温和、专业。
+CLINIC_SYSTEM_PROMPT = """你是医疗健康 Agent 工作台中的"AI预问诊助手"，态度温和、专业。
 
 你的任务是通过友好的对话帮助用户描述清楚症状，然后给出合理的分诊建议。
 

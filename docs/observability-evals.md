@@ -25,13 +25,13 @@ docker compose -f compose.observability.yml up -d
 
 ```dotenv
 OBSERVABILITY_PROVIDER=otel
-OTEL_SERVICE_NAME=smart-health-assistant
+OTEL_SERVICE_NAME=medical-health-agent-workbench
 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4318/v1/traces
 TRACE_CONTENT=false
 TRACE_IMAGES=false
 ```
 
-启动后访问 `http://localhost:16686`，选择 `smart-health-assistant` 查看 Trace。输出采用标准 OTLP/HTTP，因此可将端点替换为 Phoenix、Grafana Tempo、SigNoz 或其他兼容后端；也支持通用的 `OTEL_EXPORTER_OTLP_ENDPOINT`，代码会追加 `/v1/traces`。`compose.observability.yml` 使用内存存储，仅适合本地调试。
+启动后访问 `http://localhost:16686`，选择 `medical-health-agent-workbench` 查看 Trace。输出采用标准 OTLP/HTTP，因此可将端点替换为 Phoenix、Grafana Tempo、SigNoz 或其他兼容后端；也支持通用的 `OTEL_EXPORTER_OTLP_ENDPOINT`，代码会追加 `/v1/traces`。`compose.observability.yml` 使用内存存储，仅适合本地调试。
 
 设置 `OBSERVABILITY_PROVIDER=langsmith` 并配置 `LANGSMITH_API_KEY`（或旧名 `LANGCHAIN_API_KEY`）可继续使用原有 LangSmith 链路；相同内容开关会映射为 LangSmith 的输入、输出与元数据隐藏配置。设置 `none` 则关闭观测。
 

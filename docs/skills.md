@@ -1,6 +1,6 @@
-# Agent Skills System — Smart Health Assistant
+# Agent Skills System — Medical Health Agent Workbench
 
-[中文文档 ↓](#agent-技能系统——大健康智能助手)
+[中文文档 ↓](#agent-技能系统)
 
 ---
 
@@ -212,9 +212,9 @@ The Markdown body below the frontmatter is human documentation — it is not par
 
 ---
 
-# Agent 技能系统——大健康智能助手
+# Agent 技能系统
 
-[English Documentation ↑](#agent-skills-system--smart-health-assistant)
+[English Documentation ↑](#agent-skills-system--medical-health-agent-workbench)
 
 ---
 

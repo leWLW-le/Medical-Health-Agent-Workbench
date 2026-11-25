@@ -1,8 +1,10 @@
 <div align="center">
 
-# Health AI Assistant
+# Medical Health Agent Workbench
 
-**An account-based workspace for everyday health questions, text-based intake, medication information, and lab report review.**
+**LangGraph Multi-Agent Orchestration and Evidence Traceability**
+
+An account-based workspace for everyday health questions, text-based intake, medication information, and lab report review.
 
 [简体中文](README.md) · [Features](#features) · [Quick start](#quick-start) · [Architecture](#architecture) · [Development and checks](#development-and-checks)
 

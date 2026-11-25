@@ -52,7 +52,7 @@ export default function HealthSignIn({ onAccount }: { onAccount: (account: Healt
                     <form onSubmit={submit} className="flex flex-col justify-center gap-5 p-6 sm:p-9 lg:px-10 lg:py-12">
                         <div>
                             <span className="mb-4 grid h-11 w-11 place-items-center rounded-2xl border border-brand-100 bg-brand-50 text-brand-700" aria-hidden><LockKeyhole size={20} /></span>
-                            <h1 className="text-[1.6rem] font-bold leading-snug text-ink-900">{register ? '创建体验账号' : '登录大健康 AI 助手'}</h1>
+                            <h1 className="text-[1.6rem] font-bold leading-snug text-ink-900">{register ? '创建体验账号' : '登录医疗健康 Agent 工作台'}</h1>
                             <p className="mt-2 rounded-xl bg-brand-50/60 px-3 py-2.5 text-sm leading-relaxed text-ink-700">本体验环境仅用于模拟数据，请勿填写真实病历或个人健康信息。</p>
                         </div>
                         <label className="block text-sm font-semibold text-ink-700">

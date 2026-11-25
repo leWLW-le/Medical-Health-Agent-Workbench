@@ -22,7 +22,7 @@ function SiteHeader({ isReports, signOut, username }: { isReports: boolean; sign
       <div className="mx-auto flex w-full max-w-[1680px] items-center gap-x-3 px-3.5 pb-2 pt-[max(env(safe-area-inset-top),0.55rem)] sm:gap-x-5 sm:px-7 sm:py-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <span aria-hidden="true" className="brand-mark grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white"><HeartPulse size={19} /></span>
-          <span className="truncate text-sm font-bold text-ink-900 sm:text-base">大健康 AI 助手</span>
+          <span className="truncate text-sm font-bold text-ink-900 sm:text-base">医疗健康 Agent 工作台</span>
         </div>
         <nav aria-label="主导航" className="shrink-0">
           <a href="#" aria-label={isReports ? '返回健康助手' : undefined} aria-current={isReports ? 'location' : 'page'}

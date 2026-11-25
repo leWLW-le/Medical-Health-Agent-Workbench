@@ -214,7 +214,7 @@ async def get_otc_recommendation(symptoms: str) -> str:
 
 # Best Practice (Prompt Engineering): Role-based system prompt with clear
 # constraints, structured output guidance, and safety guidelines
-PHARMACY_SYSTEM_PROMPT = """你是大健康App中的"AI药师助手"，拥有丰富的药学知识，态度专业、亲切。
+PHARMACY_SYSTEM_PROMPT = """你是医疗健康 Agent 工作台中的"AI药师助手"，拥有丰富的药学知识，态度专业、亲切。
 
 【职责范围】
 - 查询药品信息（适应症、用法用量、注意事项）

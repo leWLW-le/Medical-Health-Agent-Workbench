@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Smart Health Assistant (大健康智能助手) — a mobile-first, Chinese-language healthcare AI platform. A FastAPI + LangGraph backend routes each user turn to a specialist agent (clinic triage, insurance, lab-report interpretation, pharmacy, general advisor) and streams the reply over SSE, including structured UI card events that the React frontend renders. `AGENTS.md` at the repo root holds the team's contribution conventions (commit style, PR expectations, privacy rules) and applies alongside this file.
+Medical Health Agent Workbench (医疗健康 Agent 工作台) is a mobile-first, Chinese-language healthcare AI workspace. A FastAPI + LangGraph backend routes each user turn to a specialist agent (clinic triage, insurance, lab-report interpretation, pharmacy, general advisor) and streams the reply over SSE, including structured UI card events that the React frontend renders. `AGENTS.md` at the repo root holds the team's contribution conventions (commit style, PR expectations, privacy rules) and applies alongside this file.
 
 ## Development Commands
 

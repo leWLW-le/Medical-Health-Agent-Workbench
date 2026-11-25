@@ -1,1 +1,1 @@
-# RAG module for the Smart Health Assistant
+# RAG module for the Medical Health Agent Workbench

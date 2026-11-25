@@ -28,7 +28,7 @@ def _build_system_prompt(user_info: dict) -> str:
 
     lang_style = "请使用极度通俗易懂、口语化的语言，避免医学专业词汇。" if elder_mode else "请使用清晰简洁的语言。"
 
-    return f"""你是一个名为"大健康AI助手"的专业、温暖的虚拟健康顾问。
+    return f"""你是一个名为"医疗健康 Agent 工作台"的专业、温暖的虚拟健康顾问。
 
 【当前用户信息】
 姓名：{name}  年龄：{age}  既往史：{history}

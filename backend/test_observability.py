@@ -15,7 +15,7 @@ class ObservabilitySettingsTests(unittest.TestCase):
         settings = resolve_observability_settings({})
 
         self.assertEqual(settings.provider, "none")
-        self.assertEqual(settings.service_name, "smart-health-assistant")
+        self.assertEqual(settings.service_name, "medical-health-agent-workbench")
         self.assertFalse(settings.trace_content)
         self.assertFalse(settings.trace_images)
 

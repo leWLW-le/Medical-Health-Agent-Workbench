@@ -1,5 +1,5 @@
 """
-RAG Knowledge Base for the Smart Health Assistant.
+RAG Knowledge Base for the Medical Health Agent Workbench.
 
 Retrieval strategy: Hybrid BM25 (30%) + Dense MMR (70%) via EnsembleRetriever.
   - BM25 catches exact medical term matches (高血压, 血红蛋白, 门诊报销 …)

@@ -8,7 +8,7 @@ const photoSessionApi = accountReports ? '/api/health/report-photo/session' : '/
 
 async function registerReportAccount(page, suffix) {
     if (!accountReports) return;
-    await page.getByRole('heading', { name: '登录大健康 AI 助手' }).waitFor();
+    await page.getByRole('heading', { name: '登录医疗健康 Agent 工作台' }).waitFor();
     await page.getByRole('button', { name: '创建体验账号', exact: true }).click();
     await page.getByLabel('用户名').fill('audit_ui_' + suffix + '_' + Date.now().toString(36));
     await page.getByLabel('密码').fill('synthetic-audit-ui-password');

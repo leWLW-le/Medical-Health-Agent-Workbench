@@ -11,7 +11,7 @@ from agents.state import MainAgentState
 from agents.llm import get_chat_llm
 
 
-ROUTER_SYSTEM_PROMPT = """你是一个大健康 App 中的"智能意图路由器"。根据最新一句用户消息意图分类。如果它是在补充症状或回答上一句追问，需要结合最近的对话判断。此前的话题已经切换时，以新话题为准。
+ROUTER_SYSTEM_PROMPT = """你是一个医疗健康 Agent 工作台中的"智能意图路由器"。根据最新一句用户消息意图分类。如果它是在补充症状或回答上一句追问，需要结合最近的对话判断。此前的话题已经切换时，以新话题为准。
 
 请你严格回复以下指定字符串选项之一，不要回答多余的废话，只回复分类 ID 字符串：
 1. "clinic_agent" - 用户描述了具体的身体不适、症状，寻求如何就医、看什么科或者询问可能得了什么病。
@@ -107,7 +107,7 @@ async def router_node(state: MainAgentState) -> dict:
     budget per-turn instead of per-conversation.
     """
     print("--- [Router] Entering router_node ---", flush=True)
-
+    
     # Get the last human message
     last_message = state["messages"][-1]
     user_text = last_message.content if hasattr(last_message, "content") else str(last_message)
@@ -120,7 +120,7 @@ async def router_node(state: MainAgentState) -> dict:
     # 2. Context Awareness: Short-circuit if already in a specialized mode
     # active_agent uses the same "*_agent" key format that _AGENT_MAP in graph.py expects.
     active_agent = state.get("active_agent", "")
-
+    
     # Check if the user is explicitly asking to exit the current mode.
     # These phrases take highest priority over any active_agent lock.
     if is_exit_request(user_text):
@@ -130,7 +130,7 @@ async def router_node(state: MainAgentState) -> dict:
             "active_agent": "advisor_agent",
             "handoff_count": 0,
         }
-
+    
     if active_agent and active_agent not in ("advisor_agent", ""):
         print(f"--- [Router] Short-circuit: already in {active_agent}, bypassing LLM classification ---", flush=True)
         return {"next_agent": active_agent, "handoff_count": 0}
@@ -159,7 +159,7 @@ async def router_node(state: MainAgentState) -> dict:
         raw_content_lower = response.content.lower()
         # Remove all whitespace (spaces, newlines, tabs) to handle LLM formatting quirks (e.g. 'clin\nic_agent')
         raw_clean = "".join(raw_content_lower.split())
-
+        
         # Robust substring matching
         if "clinic_agent" in raw_clean:
             next_agent = "clinic_agent"
@@ -171,9 +171,9 @@ async def router_node(state: MainAgentState) -> dict:
             next_agent = "pharmacy_agent"
         else:
             next_agent = "advisor_agent"
-
+            
         print(f"--- [Router] Matched next_agent: '{next_agent}' ---", flush=True)
-
+            
     except Exception as e:
         import traceback
         print(f"--- [Router] LLM error: {e} ---", flush=True)
@@ -181,7 +181,7 @@ async def router_node(state: MainAgentState) -> dict:
         next_agent = "advisor_agent"
 
     print(f"--- [Router] Dispatching to: {next_agent} ---", flush=True)
-
+    
     # Store the decision in active_agent so subsequent turns persist
     return {
         "next_agent": next_agent,

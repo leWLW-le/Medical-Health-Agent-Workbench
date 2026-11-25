@@ -87,9 +87,9 @@ def resolve_observability_settings(
     return ObservabilitySettings(
         provider=provider,
         service_name=source.get(
-            "OTEL_SERVICE_NAME", "smart-health-assistant"
+            "OTEL_SERVICE_NAME", "medical-health-agent-workbench"
         ).strip()
-        or "smart-health-assistant",
+        or "medical-health-agent-workbench",
         otlp_endpoint=otlp_endpoint,
         trace_content=_read_bool(source, "TRACE_CONTENT", False),
         trace_images=_read_bool(source, "TRACE_IMAGES", False),

@@ -14,10 +14,10 @@ from langchain_core.messages import BaseMessage
 class MainAgentState(TypedDict):
     # 会话聊天记录
     messages: Annotated[Sequence[BaseMessage], operator.add]
-
+    
     # 存放全局级别的用户信息注入：年龄、性别、慢性病史等
     user_info: dict
-
+    
     # 由分类器决定将流转到哪个下游子图
     next_agent: str
 ```
@@ -34,7 +34,7 @@ class MainAgentState(TypedDict):
 #### **提示词工程示范 (System Prompt for Router)**
 
 ```text
-你是一个大健康 App 中的“智能意图路由器”。你需要阅读用户最新的提问，并将当前会话“转接”给下面最适合处理该提问的专家智能体。
+你是一个医疗健康 Agent 工作台中的“智能意图路由器”。你需要阅读用户最新的提问，并将当前会话“转接”给下面最适合处理该提问的专家智能体。
 
 请你严格回复以下指定字符串选项之一（不要回答多余的废话）：
 1. "clinic_agent": 用户描述了具体的身体不适、症状，寻求如何就医、看什么科或者询问可能得了什么病。
@@ -76,7 +76,7 @@ workflow.add_edge(START, "router")
 # 条件路由函数
 def route_to_agent(state: MainAgentState) -> str:
     # 路由器输出了下一步去哪里
-    agent_id = state.get("next_agent", "advisor_node")
+    agent_id = state.get("next_agent", "advisor_node") 
     return agent_id + "_node" # 映射到上面 add_node 注册的名字
 
 # 将路由器连接到各个专门的 Node
@@ -118,7 +118,7 @@ async def chat_endpoint(request: ChatRequest):
             "age": 30
         }
     }
-
+    
     # 迭代子图的执行结果并通过 FastAPI 返回
     async def event_generator():
         async for event in master_app.astream_events(initial_state, version="v2"):
@@ -128,6 +128,6 @@ async def chat_endpoint(request: ChatRequest):
                 chunk = event["data"]["chunk"].content
                 if chunk:
                     yield f"data: {chunk}\n\n"
-
+                    
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 ```

@@ -107,7 +107,7 @@ async def lifespan(_app: FastAPI):
             _observability_runtime.shutdown()
 
 
-app = FastAPI(title="大健康 AI 后端", version="0.5.0", lifespan=lifespan)
+app = FastAPI(title="医疗健康 Agent 工作台 API", version="0.5.0", lifespan=lifespan)
 
 app.include_router(report_audit_router)
 
@@ -438,7 +438,7 @@ async def _stream_agent_events(graph_input: Any, config: dict | None = None):
 
 @app.get("/")
 async def root():
-    return {"message": "大健康 AI 后端 v0.5 (LangGraph)"}
+    return {"message": "医疗健康 Agent 工作台 API v0.5 (LangGraph)"}
 
 
 @app.get("/health")
