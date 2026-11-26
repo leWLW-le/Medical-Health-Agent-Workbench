@@ -1,85 +1,102 @@
-<div align="center">
-
 # 医疗健康 Agent 工作台
 
 **LangGraph 多智能体编排与证据追溯**
 
-把日常健康问答、文字预问诊、药品咨询和体检报告解读放进一个账号工作台。
+一个账号下使用健康问答、文字预问诊、用药咨询和体检报告解读。四个入口共用 LangGraph 主图。上传 PDF 或照片后，可以查看患者版解读、对照原页校正字段，并基于同一份报告继续追问。
 
-[English](README.en.md) · [功能全景](#功能全景) · [快速启动](#快速启动) · [技术架构](#技术架构) · [开发与验证](#开发与验证)
+[English](README.en.md) · [架构](#技术架构) · [界面演示](#界面演示) · [本地启动](#本地启动) · [评测基线](#评测基线)
 
-</div>
-
-## 功能全景
-
-| 入口 | 可以做什么 | 输出和记录 |
-| --- | --- | --- |
-| **健康对话** | 了解常见健康问题，整理日常记录和就诊前资料。可以为下一条提问开启「联网搜索」 | SSE 流式回答、知识库摘录、公开医学资料来源及独立对话历史 |
-| **AI 诊室** | 通过文字描述症状，按追问补充持续时间、严重程度等信息 | 整理症状要点和建议就诊科室。急症规则会检查首次描述和后续补答 |
-| **药管家** | 输入药名了解用途、说明书注意事项和用药相互作用，也可以上传药盒或追溯码照片 | 药品信息卡、图片识别结果和用药问答。药品及相互作用的结构化核对覆盖内置样例 |
-| **报告内容解析** | 上传 PDF 或照片，查看体检解读单，打开原页核对并修正字段 | 按报告参考范围排列结果，附原页依据、指标追问和就诊准备说明。报告与校正记录随账号保存 |
-
-登录后，前面三个咨询入口各有独立的会话列表。报告入口按每份报告保留解读和追问。工作台支持长辈模式，放大界面文字。
-
-## 智能体如何工作
-
-- **按任务选择流程。** LangGraph 主图根据当前模式和问题，进入健康顾问、文字预问诊、用药咨询或报告解读流程。回答、工具状态和资料卡片通过 SSE 推送到页面。
-- **等患者补答再继续。** 预问诊聚焦尚未收集的症状信息。报告解读根据当前结果与已知情况一次补问一项，用户可以跳过或先看结论。报告解读的检查点随该份报告保存，重开报告后可继续补答。
-- **保留报告依据。** 本地 OCR 提取检验项目、结果、单位和参考范围。可疑字段标为待核对，校正后重新比对。回答能引用原报告页码，工作记录展示模型调用次数、耗时、工具执行结果和回退原因。
-- **分开配置模型用途。** 对话、报告解读和药品图片识别可使用不同模型配置。可用供应商与 OpenAI 兼容端点见[模型配置示例](backend/.env.example)。
-
-### 模拟报告审核
-
-登录后可打开[模拟核对演示](http://127.0.0.1:5173/#/report-audit-demo)，用合成病历体验批量提交、后台任务和版本回看。发布字段更正后，系统根据原答复引用的字段创建复核任务，在「更正影响」里可查看新旧字段并标记已复核。[审核流程与版本说明](APPLICATION.md)
-
-## 快速启动
-
-需要 Docker Compose 和 Node.js。使用 AI 对话前，按[模型配置示例](backend/.env.example)设置 `LLM_PROVIDER`、`LLM_API_KEY` 及所需的模型参数。药盒和追溯码图片识别使用 `VISION_*` 配置。
-
-在仓库根目录运行以下 PowerShell 命令，生成本机体验用的服务凭据和数据库密码，然后启动服务。重用已有 MySQL 卷时，请使用原来初始化的数据库密码。
-
-```powershell
-$env:AUDIT_AGENT_TOKEN = [guid]::NewGuid().ToString('N')
-$env:AUDIT_DB_PASSWORD = [guid]::NewGuid().ToString('N')
-$env:AUDIT_MYSQL_ROOT_PASSWORD = [guid]::NewGuid().ToString('N')
-docker compose -f compose.audit.yml up --build -d
-```
-
-另开终端启动前端。
-
-```powershell
-cd frontend
-npm ci
-npm run dev -- --host 127.0.0.1
-```
-
-打开[本机工作台](http://127.0.0.1:5173/)，创建体验账号。在顶部切换四个功能。也可以通过 Java 21 和本地 H2 运行账号版。[完整启动说明](APPLICATION.md)
+**本地合成样本基线**　字段提取 50/52，原页定位 13/13，模拟审核引用 8/8。[查看评测口径](#评测基线)
 
 ## 技术架构
 
 ```mermaid
 flowchart LR
-    UI["React · 工作台"] --> Gateway["Spring Boot · 账号网关"]
-    Gateway --> Main["FastAPI · LangGraph 主图"]
-    Gateway --> OCR["Python · OCR 和审核服务"]
-    Gateway --> Data[("MySQL / H2")]
-    Gateway -.-> Cache[("Redis")]
-    Main --> Sources["本地知识库 · 可选联网搜索"]
-    Main --> Checkpoints[("报告解读检查点")]
-    OCR -.-> MCP["可选 MCP 术语检索"]
+    UI["React 工作台"] --> Gateway["Spring Boot 账号网关"]
+    Gateway --> Health["FastAPI · LangGraph 主图"]
+    Gateway --> Audit["FastAPI · OCR 与模拟审核"]
+    Gateway --> DB[("H2 / MySQL")]
+    Health --> Checkpoint[("SQLite 报告检查点")]
+    Audit -. 模拟审核术语查询 .-> MCP["FastMCP"]
 ```
 
-| 目录 | 主要职责 |
+| 组件 | 职责 |
 | --- | --- |
-| `frontend/` | React、TypeScript、Vite 和 Tailwind CSS。登录、健康咨询、报告校正和 SSE 渲染 |
-| `application/` | Java 21、Spring Boot 和 Flyway。会话、所有权校验、报告版本和异步审核任务 |
-| `backend/agents/` | FastAPI 接入的 LangGraph 主图、专业智能体、模型适配和健康知识工具 |
-| `backend/report_audit/` | PDFium、RapidOCR、字段核对、证据问答和复核流程 |
-| `backend/evals/` | 路由、工具调用及合成报告评测 |
+| [前端](frontend/) | React、TypeScript、Vite 和 Tailwind CSS。处理登录、报告校正和 SSE 渲染 |
+| [账号网关](application/) | Java 21、Spring Boot、JDBC、Flyway。管理账号、会话与报告版本，本地使用 H2，容器配置使用 MySQL 和 Redis |
+| [健康 Agent](backend/agents/) | FastAPI、LangGraph 和 LangChain。按会话模式和意图路由，支持跨角色转交的分支每轮最多转交一次。通过 SSE 推送回答、工具状态和资料卡片 |
+| [报告处理](backend/report_audit/) | PDFium 优先提取 PDF 文本与坐标，扫描页及照片使用 RapidOCR。按原报告参考范围标记结果，保留页码和位置供用户校正 |
 
-## 开发与验证
+## 界面演示
 
-- 前端在 `frontend` 运行 `npm run lint` 和 `npm run build`。
-- 账号及审核回归在 `application` 运行 `mvn test`，默认使用测试专用 H2。
-- 合成报告评测在 `backend` 运行 `uv run python -m evals.report_audit`，检查字段提取、异常漏检、原页定位及证据引用。
-- 浏览器回归、合成样本生成和单机 OCR 调试见[报告工作台说明](REPORT_AUDIT.md)。智能体调试见[LangGraph 运行时](docs/langgraph-runtime.md)和[可观测与评估](docs/observability-evals.md)。
+动图演示了上传合成报告、对照原 PDF 校正字段、查看患者版解读单，以及追问指标并打开原页引用。
+
+![体检报告解读演示，包含上传、原页核对、字段校正和追问](docs/images/report-reading-demo.gif)
+
+按[本地启动](#本地启动)运行工作台并登录后，打开[报告内容解析](http://127.0.0.1:5173/#/report-audit)，上传[合成检验报告 PDF](docs/demo/synthetic-lab-report.pdf)。样例里的血红蛋白（HGB）单位与参考范围错列，可点开原页核对并保存校正，再查看更新后的解读或追问血红蛋白结果。
+
+<details>
+<summary>查看界面截图</summary>
+
+**工作台首页**
+
+![医疗健康 Agent 工作台界面，顶部显示四个业务入口](docs/images/report-demo-workbench.png)
+
+**对照原页校正字段**
+
+![字段校正弹窗高亮显示原 PDF 上的血红蛋白行](docs/images/report-demo-source-review.png)
+
+**患者版解读单**
+
+![患者版解读单展示报告摘要和已确认的超范围项](docs/images/report-demo-summary.png)
+
+**指标追问与原页引用**
+
+![报告对话展示血红蛋白结果和可打开的原报告第 1 页引用](docs/images/report-demo-follow-up.png)
+
+</details>
+
+## Agent 工作流程
+
+- **混合检索。** 健康问答和预问诊在生成前查本地知识库，药管家在用药工具内按需检索。共享检索器采用 BM25 与向量 MMR 召回，并用 RRF 融合。用户也可以为一轮健康对话开启联网搜索，查询 Europe PMC 和 MedlinePlus。[检索说明](docs/rag.md)
+- **Agentic RAG。** 报告解读先加载确认字段和检验知识，再由模型决定是否调用报告查询、检验知识检索、指标联算三个工具，最多补证两轮。回答校验引用白名单和异常项覆盖，校验失败时定向重写，超时或重写失败时依据已核实证据回退。[报告解读实现](backend/report_audit/reading.py)
+- **人工补答与恢复。** 预问诊和报告解读可用 `interrupt()` 等待用户补充情况。报告解读用 SQLite 保存检查点，重开报告时按报告字段版本恢复任务。用户校正字段后会重新比较并更新版本。[LangGraph 运行时](docs/langgraph-runtime.md)
+- **模拟审核与 MCP。** 本地[模拟核对演示](http://127.0.0.1:5173/#/report-audit-demo)使用合成原始记录，支持异步审核、版本回看和更正影响复核。其术语节点可通过 Streamable HTTP 调用 FastMCP 的 `lookup_lab_reference`，覆盖 10 种检验代码，调用失败时回退本地词表。[审核与 MCP 配置](APPLICATION.md#不使用容器启动账号主版)
+- **可观测性。** 报告工作记录保存模型耗时、每轮工具结果和回退原因。链路追踪可接入 OpenTelemetry／Jaeger，默认隐藏正文及图片。[追踪与评估](docs/observability-evals.md)
+
+## 本地启动
+
+需要 Python 3.13、uv、Java 21、Maven 和 Node.js。在 `backend` 中按[配置示例](backend/.env.example)创建 `.env`，设置对话模型的供应商、API Key 和模型名。可分别配置 `REPORT_READING_*` 与 `VISION_*`，用于报告解读和图片识别。
+
+先在 `backend` 执行 `uv sync --locked`，在 `frontend` 执行 `npm ci`。然后分别打开终端，按下表启动服务。
+
+| 目录 | 命令 | 本机端口 |
+| --- | --- | --- |
+| `backend` | `uv run uvicorn report_audit.agent_service:app --host 127.0.0.1 --port 8091` | 8091 |
+| `backend` | `uv run uvicorn main:app --host 127.0.0.1 --port 8000` | 8000 |
+| `application` | 配置 `local` profile 后运行 `mvn spring-boot:run` | 8080 |
+| `frontend` | `npm run dev -- --host 127.0.0.1` | 5173 |
+
+启动 Java 前，将 `AUDIT_AGENT_URL` 指向 `http://127.0.0.1:8091`，`HEALTH_AGENT_URL` 指向 `http://127.0.0.1:8000`。Java 与相应 Python 服务使用同一份服务凭据 `AUDIT_AGENT_TOKEN` 或 `HEALTH_AGENT_TOKEN`。[完整启动命令](APPLICATION.md#不使用容器启动账号主版)
+
+打开[本机工作台](http://127.0.0.1:5173/)，注册本地体验账号。H2 将账号、对话及结构化报告保存在 `application/data/report-audit.mv.db`。报告检查点默认写入 `backend/report-reading-checkpoints.sqlite`。恢复原页预览时，应用会校验用户重新选择的原件。
+
+## 评测基线
+
+评测集包含 5 个扫描用例和 5 个模拟核对用例，覆盖低对比度、模糊、错列和字段缺失。以下是固定合成集的一次本地评测结果。
+
+| 指标 | 结果 |
+| --- | --- |
+| 字段提取准确率 | 50/52 |
+| 原页定位 | 13/13 |
+| 范围异常漏检 | 1/6，转待核对 |
+| 模拟原始记录差异漏检 | 0/4 |
+| 模拟证据引用正确率 | 8/8 |
+
+在 `backend` 执行下列命令。它使用实际 PDFium 和 RapidOCR 跑扫描样本，并对模拟记录差异及引用的记录版本进行校验，无需模型凭据。
+
+```sh
+uv run python -m evals.report_audit --json
+```
+
+更多验证包括前端 `npm run lint`、`npm run build`，以及在 `application` 运行 `mvn test`。[样本与浏览器回归](REPORT_AUDIT.md#ocr-与证据基线)
