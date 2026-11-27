@@ -70,7 +70,7 @@ class MasterGraphBuildTests(unittest.TestCase):
 
     def test_other_agent_nodes_stay_plain_callables(self):
         app = build_graph(checkpointer=MemorySaver())
-        for node_name in ("insurance_node", "report_node", "advisor_node", "pharmacy_node"):
+        for node_name in ("report_node", "advisor_node", "pharmacy_node"):
             self.assertNotIsInstance(app.nodes[node_name].bound, CompiledStateGraph)
 
 

@@ -5,7 +5,7 @@ import { useTextScale } from '../../design/textScale';
 
 /**
  * Building blocks shared by every result card in the chat, so the cards read as
- * one family: a white raised card, an icon tile + title header, stat tiles,
+ * one family: a white raised card, an icon tile + title header,
  * tone badges and divided lists. See docs/design-system.md.
  */
 
@@ -68,26 +68,6 @@ export const Badge: FC<{ tone?: Tone; children: ReactNode }> = ({ tone = 'neutra
             {tone === 'success' && <Check size={12} strokeWidth={3} className="text-success-600" />}
             {children}
         </span>
-    );
-};
-
-const VALUE_TONES: Record<Tone, string> = {
-    brand: 'text-brand-800',
-    success: 'text-ink-900',
-    warning: 'text-warning-700',
-    danger: 'text-danger-700',
-    neutral: 'text-ink-900',
-};
-
-/** A labelled number in a soft tile; use in a grid. */
-export const Stat: FC<{ label: string; value: ReactNode; sub?: ReactNode; tone?: Tone }> = ({ label, value, sub, tone = 'neutral' }) => {
-    const t = useTextScale();
-    return (
-        <div className="min-w-0 rounded-control bg-ink-50 px-3 py-2.5">
-            <div className={`text-ink-600 ${t.caption}`}>{label}</div>
-            <div className={`font-semibold tabular-nums truncate ${t.callout} ${VALUE_TONES[tone]}`}>{value}</div>
-            {sub && <div className={`text-ink-600 truncate ${t.caption}`}>{sub}</div>}
-        </div>
     );
 };
 

@@ -204,4 +204,4 @@ frontend/src/components/common/SensitiveImagePreview.tsx
 - 报告夹保存脱敏结构化结果。
 - 低置信度字段高亮并允许用户修正。
 - 药品追溯码接入真实监管或供应链接口。
-- 与用户用药提醒、医保购药、附近药店联动。
+- 与用户用药提醒和附近药店联动。

@@ -7,6 +7,14 @@ import operator
 from langchain_core.messages import BaseMessage
 
 
+CHAT_MODE_TO_AGENT = {
+    "general": "advisor_agent",
+    "clinic": "clinic_agent",
+    "pharmacy": "pharmacy_agent",
+    "report": "report_agent",
+}
+
+
 class MainAgentState(TypedDict):
     """
     Global state shared between the Router and all Specialized Agents.
@@ -18,9 +26,9 @@ class MainAgentState(TypedDict):
     # User profile info injected by the API layer (name, age, medical history, etc.)
     user_info: dict
 
-    # The agent the Router decided to dispatch to, e.g., "clinic_agent", "insurance_agent"
+    # The agent the router selected for this turn.
     next_agent: str
-
+    
     # Persistent tracking of the current focused agent to handle multi-turn conversations
     # If set, the router should bypass standard classification and route back here.
     active_agent: str

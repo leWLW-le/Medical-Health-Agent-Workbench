@@ -14,6 +14,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 from openinference.instrumentation import using_attributes
 
+from agents.state import CHAT_MODE_TO_AGENT
 from evals import (
     EvalCase,
     EvalScore,
@@ -26,19 +27,12 @@ from observability import configure_observability
 
 
 DEFAULT_DATASET = Path(__file__).with_name("cases.jsonl")
-MODE_TO_AGENT = {
-    "clinic": "clinic_agent",
-    "insurance": "insurance_agent",
-    "report": "report_agent",
-    "pharmacy": "pharmacy_agent",
-    "general": "advisor_agent",
-}
 
 
 async def _execute_case(case: EvalCase):
     from agents.graph import master_app
 
-    active_agent = MODE_TO_AGENT.get(case.chat_mode, "advisor_agent")
+    active_agent = CHAT_MODE_TO_AGENT.get(case.chat_mode, "advisor_agent")
     initial_state = {
         "messages": [HumanMessage(content=case.input)],
         "user_info": {},

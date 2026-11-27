@@ -11,6 +11,7 @@ from io import BytesIO
 import unittest
 from unittest.mock import AsyncMock, patch
 
+from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -37,7 +38,6 @@ def _parse_sse(chunks: list[str]) -> list[dict]:
 class MainIsToolNameAgnosticTests(unittest.TestCase):
     def test_the_tool_name_to_card_type_maps_are_gone(self):
         for attribute in (
-            "_INSURANCE_TOOL_TO_CARD_TYPE",
             "_REPORT_TOOL_TO_CARD_TYPE",
             "PHARMACY_TOOL_TO_CARD_TYPE",
         ):
@@ -45,7 +45,7 @@ class MainIsToolNameAgnosticTests(unittest.TestCase):
 
     def test_the_ui_label_tables_are_still_there(self):
         self.assertIn("find_nearby_pharmacy", main._SKILL_LABELS)
-        self.assertIn("insurance_node", main._NODE_LABELS)
+        self.assertIn("clinic_node", main._NODE_LABELS)
 
     def test_only_card_and_text_may_come_off_the_custom_stream(self):
         self.assertEqual(main._STREAMABLE_CUSTOM_TYPES, {"card", "text"})
@@ -211,18 +211,20 @@ class CardSseSequenceTests(unittest.IsolatedAsyncioTestCase):
         model = scripted(AIMessage(content="这里是日常健康管理建议。"))
         excerpt = "定期记录血压，复诊时向医生提供近期读数。"
         kb = HealthKnowledgeBase()
-        kb.aretrieve = AsyncMock(return_value=[
-            Document(page_content=excerpt, metadata={"source": "medical_knowledge", "section": "高血压"}),
-            Document(page_content="医保资料", metadata={"source": "insurance_policies"}),
-        ])
+        current = Document(page_content=excerpt, metadata={"source": "medical_knowledge", "section": "高血压"})
+        stale = Document(page_content="已下线的资料", metadata={"source": "deleted_source"})
         state = {"messages": [HumanMessage(content="高血压日常管理有哪些建议？")], "active_agent": "advisor_agent"}
 
         with (
+            patch.object(kb, "_load_documents", return_value=[current]),
+            patch("rag.knowledge_base.get_embeddings"),
+            patch("rag.knowledge_base.get_vectorstore") as store,
             patch.object(main, "_master_app", app),
             patch("agents.router.get_chat_llm", return_value=scripted(AIMessage(content="advisor_agent"))),
             patch("agents.advisor.get_chat_llm", return_value=model),
             patch("agents.advisor.get_knowledge_base", return_value=kb),
         ):
+            store.return_value.as_retriever.return_value = BM25Retriever.from_documents([stale])
             events = _parse_sse([
                 payload async for payload in main._stream_agent_events(
                     state, {"configurable": {"thread_id": "knowledge-card-test"}},
@@ -239,7 +241,7 @@ class CardSseSequenceTests(unittest.IsolatedAsyncioTestCase):
             {"source": "medical_knowledge", "section": "高血压", "excerpt": excerpt},
         ])
         self.assertIn(excerpt, model.invocations[-1][0].content)
-        self.assertNotIn("医保资料", model.invocations[-1][0].content)
+        self.assertNotIn(stale.page_content, model.invocations[-1][0].content)
         self.assertEqual(events[-1]["type"], "finish")
 
     async def test_report_search_filters_sources_and_hides_the_image_query(self):
@@ -293,20 +295,20 @@ class CardSseSequenceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(events[card]["payload"]["type"], "hospital_list")
         self.assertEqual(events[-1]["type"], "finish")
 
-    async def test_legacy_insurance_route_returns_guidance_only(self):
+    async def test_unrecognized_agent_in_existing_state_is_rerouted(self):
         app = build_graph(checkpointer=MemorySaver())
-        router_model = scripted(AIMessage(content="insurance_agent"))
-        state = {"messages": [HumanMessage(content="我医保卡里还有多少钱？")], "active_agent": "advisor_agent"}
-        with patch.object(main, "_master_app", app), patch("agents.router.get_chat_llm", return_value=router_model):
-            events = _parse_sse([
-                payload async for payload in main._stream_agent_events(
-                    state, {"configurable": {"thread_id": "insurance-guidance-test"}},
-                )
-            ])
+        router_model = scripted(AIMessage(content="unsupported_agent"))
+        model = scripted(AIMessage(content="欢迎咨询健康问题。"))
+        state = {"messages": [HumanMessage(content="你好")], "active_agent": "retired_agent"}
+        with (
+            patch("agents.router.get_chat_llm", return_value=router_model),
+            patch("agents.advisor.get_chat_llm", return_value=model),
+            patch("agents.advisor.get_knowledge_base", return_value=FakeKnowledgeBase()),
+        ):
+            result = await app.ainvoke(state, {"configurable": {"thread_id": "retired-agent-test"}})
 
-        self.assertTrue(any(event["type"] == "text" and "国家医保服务平台" in event["content"] for event in events))
-        self.assertFalse(any(event["type"] in {"tool_start", "card", "error"} for event in events))
-        self.assertEqual(events[-1]["type"], "finish")
+        self.assertEqual(result["active_agent"], "advisor_agent")
+        self.assertEqual(result["messages"][-1].content, "欢迎咨询健康问题。")
 
 
 if __name__ == "__main__":

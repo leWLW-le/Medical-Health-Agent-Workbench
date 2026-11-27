@@ -63,12 +63,18 @@ def _get_chroma(
     Path(persist_dir).mkdir(parents=True, exist_ok=True)
 
     existing_db = Path(persist_dir) / "chroma.sqlite3"
-    if existing_db.exists() and not rebuild:
-        return Chroma(
+    if existing_db.exists():
+        store = Chroma(
             persist_directory=persist_dir,
             embedding_function=embeddings,
             collection_name="health_kb",
         )
+        if rebuild:
+            if documents is None:
+                raise ValueError("documents must be provided to rebuild the Chroma store")
+            store.reset_collection()
+            store.add_documents(documents)
+        return store
 
     if documents is None:
         raise ValueError("documents must be provided to build a new Chroma store")

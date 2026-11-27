@@ -36,8 +36,7 @@ def knowledge_search_tool(
 
         docs = [
             doc for doc in candidates
-            if doc.metadata.get("source") != "insurance_policies"
-            and (source is None or doc.metadata.get("source") == source)
+            if source is None or doc.metadata.get("source") == source
         ][:limit]
         context = knowledge_base.format_context(docs)
         if context:

@@ -410,7 +410,7 @@ class ReportAuditTest(unittest.TestCase):
             Document(page_content="糖化血红蛋白（HbA1c）", metadata={"source": "lab_reference", "section": "血常规参考范围"}),
             Document(page_content="血红蛋白（HGB）资料片段", metadata={"source": "lab_reference", "section": "血常规参考范围"}),
             Document(page_content="血红蛋白（HGB）其他样本", metadata={"source": "lab_reference", "section": "尿常规参考范围"}),
-            Document(page_content="血红蛋白无关内容", metadata={"source": "insurance_policies"}),
+            Document(page_content="血红蛋白无关内容", metadata={"source": "medical_knowledge"}),
         ])
         with (
             patch.dict("os.environ", {"REPORT_AUDIT_KNOWLEDGE": "1"}),

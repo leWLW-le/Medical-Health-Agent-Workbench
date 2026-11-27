@@ -112,15 +112,15 @@ flowchart TD
 
 ## Agent 转接（handoff）
 
-`active_agent` 会把会话锁在某个专科里。锁本身保留（多轮上下文靠它），但用户在医保模式下问症状时，不该再收到医保的回答——转接就是用来解这个锁的。
+`active_agent` 让同一专科承接多轮对话。用户切换话题时，当前专科可将本轮交给对应的专科。
 
 ### 工具与提示词
 
-`agents/handoff.py` 为每个专科生成 `transfer_to_clinic` / `transfer_to_insurance` / `transfer_to_report` / `transfer_to_pharmacy` / `transfer_to_advisor` 五个工具中的**其余四个**（`get_handoff_tools(AGENT_ID)`），并把 `handoff_prompt_section(AGENT_ID)` 追加到该专科的 system prompt 里，告诉模型什么时候该转接、转接后只回一句过渡语。
+`agents/handoff.py` 为每个专科生成 `transfer_to_clinic` / `transfer_to_report` / `transfer_to_pharmacy` / `transfer_to_advisor` 四个工具中的其余三个（`get_handoff_tools(AGENT_ID)`），并把 `handoff_prompt_section(AGENT_ID)` 追加到该专科的 system prompt 里，告诉模型什么时候该转接、转接后只回一句过渡语。
 
 ### 为什么不能直接在工具里抛 Command
 
-`insurance` / `pharmacy` / `report` / `advisor` 四个节点都是在**节点函数内部**调用 `create_react_agent(...).ainvoke(...)`。那个内层 agent 是一次独立的 Pregel 运行，工具里抛出的 `Command` 最多只能作用于内层图，`Command.PARENT` 也只能上溯一层、到不了主图。因此采用"工具返回标记 + 节点识别"的写法：
+`pharmacy`、`report` 和 `advisor` 三个节点都是在**节点函数内部**调用 `create_react_agent(...).ainvoke(...)`。那个内层 agent 是一次独立的 Pregel 运行，工具里抛出的 `Command` 最多只能作用于内层图，`Command.PARENT` 也只能上溯一层、到不了主图。因此采用"工具返回标记 + 节点识别"的写法：
 
 1. 工具返回一条可识别的 `ToolMessage`：`{"handoff": "<agent_id>", "reason": "…"}`。
 2. `ainvoke` 返回后，节点调用 `apply_handoff(state, new_messages)`。
@@ -141,11 +141,11 @@ flowchart TD
 
 ### 图的渲染
 
-`graph.py` 用 `add_node(..., destinations=(*handoff_destinations("<agent>_agent"), END))` 注册五个专科节点，`get_graph()` 因此能画出转接虚线。`docs/images/graph.mmd` 已重新生成。
+`graph.py` 用 `add_node(..., destinations=(*handoff_destinations("<agent>_agent"), END))` 注册四个可转接的专科节点，`get_graph()` 因此能画出转接虚线。`docs/images/graph.mmd` 已重新生成。
 
 ### 前端
 
-前端不需要任何新代码。转接后目标节点会发出自己的 `node_start`，`chatService.ts` 的 `NODE_TO_CHAT_MODE` 照常把 `chatMode` 切过去；切到 `advisor_node` 时走既有的 `exitChatMode()` 分支。
+转接目标发出 `node_start` 后，`streamEvents.ts` 将节点名映射为对话的活跃角色。当前工作台入口与已选会话继续保留。
 
 ### 退出词的收紧
 
@@ -153,16 +153,10 @@ flowchart TD
 
 ## 卡片归属：由 Agent 自己推送
 
-v0.4.0 之前，`main.py` 在 `on_tool_end` 上用三张 "工具名 → 卡片类型" 字典嗅探卡片。这三张字典（`_INSURANCE_TOOL_TO_CARD_TYPE`、`_REPORT_TOOL_TO_CARD_TYPE`、`PHARMACY_TOOL_TO_CARD_TYPE`）以及对应的解析分支都已删除，`main.py` 不再认识任何工具名（`_SKILL_LABELS` 里的展示文案除外）。
-
-新模型：卡片由产生它的 Agent 自己推送。
+Agent 和工具通过 `emit_card()` 发送卡片。`main.py` 转发自定义事件，工具展示名称来自 `_SKILL_LABELS`。
 
 | 来源 | 卡片类型 |
 | --- | --- |
-| `insurance.get_insurance_balance` | `insurance_balance` |
-| `insurance.get_consumption_records` | `insurance_expenses` |
-| `insurance.get_payment_records` | `insurance_payments` |
-| `insurance.get_cross_region_info` | `insurance_cross_region` |
 | `pharmacy.search_drug_info` | `medication_task` |
 | `pharmacy.find_nearby_pharmacy` | `hospital_list` |
 | `report_node._emit_report_cards()` | `report_analysis` |
@@ -179,4 +173,4 @@ cd backend
 uv run python -m unittest test_clinic_graph.py test_graph_build.py test_handoff.py test_cards.py
 ```
 
-`test_graph_build.py` 断言主图带 checkpointer 编译、`clinic_node` 确实是子图；`test_clinic_graph.py` 覆盖急症闸门零 LLM 短路、`check_sufficiency` 路由、中断—恢复全流程，以及 `main.py` 的 thread_id / resume 分支；`test_handoff.py` 覆盖退出词收紧、`split_handoff` 的消息裁剪、转接预算，以及"医保 → 用药"和"医保 → 预问诊子图"两条端到端链路；`test_cards.py` 用假模型跑完整 SSE 流，断言卡片落在 `tool_end` 之后、总结文本之前。全部使用 mock（`test_fakes.ScriptedChatModel`），不联网。
+`test_graph_build.py` 断言主图带 checkpointer 编译、`clinic_node` 确实是子图；`test_clinic_graph.py` 覆盖急症闸门零 LLM 短路、`check_sufficiency` 路由、中断—恢复全流程，以及 `main.py` 的 thread_id / resume 分支；`test_handoff.py` 覆盖退出词收紧、`split_handoff` 的消息裁剪、转接预算，以及健康顾问转用药或转预问诊子图两条端到端链路；`test_cards.py` 用假模型跑完整 SSE 流，断言卡片落在 `tool_end` 之后、总结文本之前。全部使用 mock（`test_fakes.ScriptedChatModel`），不联网。

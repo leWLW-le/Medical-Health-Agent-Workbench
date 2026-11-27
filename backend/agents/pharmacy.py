@@ -100,13 +100,13 @@ _INTERACTION_DATABASE = {
 
 _NEARBY_PHARMACIES = [
     {"name": "国大药房（中关村店）", "distance": "0.3公里", "hours": "08:00-22:00",
-     "phone": "010-12345678", "type": "连锁药店", "supports_insurance": True},
-    {"name": "北京医保全新大药房", "distance": "0.5公里", "hours": "07:00-23:00",
-     "phone": "010-87654321", "type": "连锁药店", "supports_insurance": True},
+     "phone": "010-12345678", "type": "连锁药店"},
+    {"name": "全新大药房", "distance": "0.5公里", "hours": "07:00-23:00",
+     "phone": "010-87654321", "type": "连锁药店"},
     {"name": "同仁堂社区药店", "distance": "0.8公里", "hours": "09:00-21:00",
-     "phone": "010-11223344", "type": "中西药店", "supports_insurance": False},
+     "phone": "010-11223344", "type": "中西药店"},
     {"name": "美团买药（30分钟送达）", "distance": "线上", "hours": "24小时",
-     "phone": "线上订购", "type": "网上药店", "supports_insurance": False},
+     "phone": "线上订购", "type": "网上药店"},
 ]
 
 
@@ -181,12 +181,11 @@ def check_drug_interaction(drug1: str, drug2: str) -> str:
 
 @tool
 def find_nearby_pharmacy(location: str = "") -> str:
-    """查找用户附近的实体药店和网上药店，包括营业时间、距离、是否支持医保刷卡。"""
+    """展示模拟药店列表，包括营业时间和距离。"""
     result = {
         "tool": "nearby_pharmacy",
         "location": location or "当前位置",
         "pharmacies": _NEARBY_PHARMACIES,
-        "tip": "支持医保刷卡的药店可直接使用医保个人账户余额购药。",
     }
     emit_card("hospital_list", result)
     return json.dumps(result, ensure_ascii=False)

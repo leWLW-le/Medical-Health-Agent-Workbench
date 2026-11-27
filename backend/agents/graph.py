@@ -2,7 +2,7 @@
 Main LangGraph StateGraph assembler.
 
 Wires together all agent nodes into the master graph:
-  START -> router -> (clinic | insurance | report photo | report reading | pharmacy | advisor)
+  START -> router -> (clinic | report photo | report reading | pharmacy | advisor)
 
 `clinic_node` is not a plain function but a compiled subgraph with its own
 state machine (see agents/clinic.py). The master graph is compiled with a
@@ -17,13 +17,12 @@ agents/handoff.py). `destinations` is what makes those dynamic edges show up in
 from langgraph.graph import StateGraph, START, END
 from langgraph.runtime import Runtime
 from agents.checkpointing import create_checkpointer
-from agents.handoff import handoff_destinations
+from agents.handoff import AGENT_TO_NODE, handoff_destinations
 from agents.state import MainAgentState
 from agents.router import router_node
 from agents.clinic import clinic_node
 from agents.report import report_node
 from agents.advisor import advisor_node
-from agents.insurance import insurance_node
 from agents.pharmacy import pharmacy_node
 from report_audit.reading_tasks import ReportRun, TaskState, add_reading_task_nodes
 
@@ -35,12 +34,8 @@ class MasterState(MainAgentState, TaskState):
 # --- Routing function ---
 # Maps next_agent string -> the node key in the graph
 _AGENT_MAP = {
-    "clinic_agent": "clinic_node",
-    "insurance_agent": "insurance_node",
-    "report_agent": "report_node",
+    **AGENT_TO_NODE,
     "report_reading_agent": "check_evidence",
-    "advisor_agent": "advisor_node",
-    "pharmacy_agent": "pharmacy_node",
 }
 
 
@@ -69,11 +64,6 @@ def build_graph(checkpointer=None):
         "clinic_node", clinic_node, destinations=(*handoff_destinations("clinic_agent"), END)
     )
     workflow.add_node(
-        "insurance_node",
-        insurance_node,
-        destinations=(*handoff_destinations("insurance_agent"), END),
-    )
-    workflow.add_node(
         "report_node", report_node, destinations=(*handoff_destinations("report_agent"), END)
     )
     workflow.add_node(
@@ -99,7 +89,6 @@ def build_graph(checkpointer=None):
     # 4. All specialized agents -> END (a Command(goto=...) handoff overrides
     #    this static edge for that one run).
     workflow.add_edge("clinic_node", END)
-    workflow.add_edge("insurance_node", END)
     workflow.add_edge("report_node", END)
     workflow.add_edge("advisor_node", END)
     workflow.add_edge("pharmacy_node", END)

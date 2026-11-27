@@ -46,3 +46,6 @@ backend/report_audit.sqlite3*
 /medical/
 /frontend/review_screenshots/
 *.log
+
+# Local test and release scratch files
+.tmp_test/

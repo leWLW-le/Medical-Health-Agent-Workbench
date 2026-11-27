@@ -22,6 +22,7 @@ from agents.checkpointing import DEFAULT_REPORT_CHECKPOINT_DB_PATH, ReportCheckp
 from agents.handoff import HANDOFF_TOOL_LABELS
 from agents.llm import LLMConfigurationError, resolve_model_settings
 from agents.report_memory import PROTECTED_REPORT_THREADS, REPORT_THREAD_PREFIX, serialize_report_history
+from agents.state import CHAT_MODE_TO_AGENT
 from agents.streaming import sse_payload as _sse_payload
 from agents.web_search import search_medical_literature
 from agents.router import is_exit_request
@@ -146,7 +147,6 @@ def get_master_app():
 _NODE_LABELS = {
     "router": "分析您的需求",
     "clinic_node": "进入预问诊模块",
-    "insurance_node": "提供医保官方查询指引",
     "report_node": "进入报告解读模块",
     "advisor_node": "进入健康顾问模块",
     "pharmacy_node": "进入用药咨询模块",
@@ -161,7 +161,6 @@ _NODE_LABELS = {
 # --- 技能工具 → 前端展示标签 ---
 _SKILL_LABELS: dict[str, str] = {
     "search_health_knowledge":  "正在检索知识库…",
-    # insurance tools
     # pharmacy tools
     "search_drug_info":         "正在查询药品信息…",
     "check_drug_interaction":   "正在检查药物相互作用…",
@@ -178,16 +177,6 @@ _SKILL_LABELS: dict[str, str] = {
     # agent-to-agent handoffs
     **HANDOFF_TOOL_LABELS,
 }
-
-_MODE_TO_AGENT = {
-    "clinic": "clinic_agent",
-    "insurance": "insurance_agent",
-    "report": "report_agent",
-    "pharmacy": "pharmacy_agent",
-    "general": "advisor_agent",
-    "dashboard": "advisor_agent",
-}
-
 
 class ChatMessage(BaseModel):
     role: str
@@ -502,7 +491,7 @@ async def _chat(request: ChatRequest, *, report_session: bool, account: str | No
         except LLMConfigurationError as exc:
             raise HTTPException(status_code=500, detail=f"大模型配置错误：{exc}") from exc
 
-    active_agent = _MODE_TO_AGENT.get(request.chat_mode, "advisor_agent")
+    active_agent = CHAT_MODE_TO_AGENT.get(request.chat_mode, "advisor_agent")
     full_state = _build_initial_state(messages, request.user_info, active_agent)
     turn_state = _build_initial_state(messages[-1:], request.user_info, active_agent)
     full_state["report_items"] = turn_state["report_items"] = report_items

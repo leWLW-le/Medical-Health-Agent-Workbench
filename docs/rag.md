@@ -6,7 +6,7 @@
 
 ## Overview
 
-The RAG (Retrieval-Augmented Generation) module augments the four specialized agents with a curated, authoritative knowledge base. Instead of relying solely on the LLM's parametric knowledge, agents retrieve relevant chunks from domain-specific documents before generating responses — improving factual accuracy and reducing hallucination on medical and insurance topics.
+The RAG (Retrieval-Augmented Generation) module augments the four specialized agents with a curated, authoritative knowledge base. Instead of relying solely on the LLM's parametric knowledge, agents retrieve relevant chunks from domain-specific documents before generating responses — improving factual accuracy and reducing hallucination on health, lab, and medication topics.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ The RAG (Retrieval-Augmented Generation) module augments the four specialized ag
 User Query
     │
     ▼
-Agent Node (advisor / clinic / report / insurance)
+Agent Node (advisor / clinic / report / pharmacy)
     │
     ├─ aretrieve(query, k=3)
     │       │
@@ -29,7 +29,7 @@ Agent Node (advisor / clinic / report / insurance)
               └─ "## 参考知识库\n{context}"
 ```
 
-For the **insurance agent**, retrieval is exposed as an additional `search_insurance_policy` tool that the ReAct agent calls on demand for policy questions.
+The pharmacy specialist retrieves references on demand. Retrieval checks the current set of source documents before returning matches from persistent indexes.
 
 ## Retrieval Strategy
 
@@ -45,8 +45,8 @@ For the **insurance agent**, retrieval is exposed as an additional `search_insur
 | File | Content | Approx. Chunks |
 |---|---|---|
 | `medical_knowledge.md` | 高血压, 2型糖尿病, 感冒/流感, 冠心病, OTC药参考 | ~14 |
-| `insurance_policies.md` | 门诊/住院报销, 慢性病政策, 异地就医, 申请流程 | ~12 |
 | `lab_reference.md` | 血常规/生化/尿常规正常值, 异常指标临床意义 | ~12 |
+| `pharmacy_knowledge.md` | 用药资料与非处方药信息 | Varies |
 
 All documents are in Chinese and stored in `backend/rag/documents/`.
 
@@ -145,7 +145,6 @@ backend/rag/
 ├── ingest.py              # CLI ingestion script
 ├── documents/
 │   ├── medical_knowledge.md
-│   ├── insurance_policies.md
 │   └── lab_reference.md
 └── chroma_db/             # Auto-generated, gitignored
 ```
@@ -160,7 +159,7 @@ backend/rag/
 
 ## 概述
 
-RAG（检索增强生成）模块为四个专业智能体提供来自权威知识库的实时支撑。智能体在生成回答前，先从领域专属文档中检索相关内容片段，再结合检索结果进行回答——显著提升了医疗和医保问题的事实准确性，并降低了大模型"幻觉"风险。
+RAG（检索增强生成）模块为四个专业智能体提供来自权威知识库的实时支撑。智能体在生成回答前，先从领域专属文档中检索相关内容片段，再结合检索结果进行回答——显著提升了健康、检验和用药问题的事实准确性，并降低了大模型"幻觉"风险。
 
 ## 系统架构
 
@@ -168,7 +167,7 @@ RAG（检索增强生成）模块为四个专业智能体提供来自权威知�
 用户输入
     │
     ▼
-智能体节点（advisor / clinic / report / insurance）
+智能体节点（advisor / clinic / report / pharmacy）
     │
     ├─ aretrieve(query, k=3)
     │       │
@@ -183,7 +182,7 @@ RAG（检索增强生成）模块为四个专业智能体提供来自权威知�
               └─ "## 参考知识库\n{context}"
 ```
 
-**医保智能体**额外将检索能力封装为 `search_insurance_policy` 工具，ReAct 智能体在处理政策类问题时按需调用。
+药管家在工具调用中按需检索。检索会按当前语料来源筛选持久化索引中的匹配结果。
 
 ## 检索策略
 
@@ -199,8 +198,8 @@ RAG（检索增强生成）模块为四个专业智能体提供来自权威知�
 | 文件 | 内容 | 估计切片数 |
 |---|---|---|
 | `medical_knowledge.md` | 高血压、2型糖尿病、感冒/流感、冠心病、常用非处方药 | ~14 |
-| `insurance_policies.md` | 门诊/住院报销比例、慢性病特殊政策、异地就医、申请流程 | ~12 |
 | `lab_reference.md` | 血常规/生化/尿常规正常值、常见异常指标临床意义 | ~12 |
+| `pharmacy_knowledge.md` | 用药资料与非处方药信息 | 随内容变化 |
 
 所有文档均以中文撰写，存放于 `backend/rag/documents/` 目录。
 
@@ -299,7 +298,6 @@ backend/rag/
 ├── ingest.py              # 命令行导入脚本
 ├── documents/
 │   ├── medical_knowledge.md    # 常见疾病知识
-│   ├── insurance_policies.md   # 医保政策
 │   └── lab_reference.md        # 检验参考范围
 └── chroma_db/             # 自动生成，已加入 .gitignore
 ```

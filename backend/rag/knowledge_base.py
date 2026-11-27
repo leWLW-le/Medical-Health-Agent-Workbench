@@ -2,7 +2,7 @@
 RAG Knowledge Base for the Medical Health Agent Workbench.
 
 Retrieval strategy: Hybrid BM25 (30%) + Dense MMR (70%) via EnsembleRetriever.
-  - BM25 catches exact medical term matches (高血压, 血红蛋白, 门诊报销 …)
+  - BM25 catches exact medical term matches (高血压, 血红蛋白 …)
   - Dense MMR retrieves semantically similar chunks with diversity enforcement
   - EnsembleRetriever merges both lists via Reciprocal Rank Fusion (RRF)
 
@@ -40,6 +40,7 @@ class HealthKnowledgeBase:
 
     def __init__(self) -> None:
         self._retriever: EnsembleRetriever | None = None
+        self._sources: set[str] = set()
         self._initialized = False
         self._lock = asyncio.Lock()
 
@@ -75,6 +76,7 @@ class HealthKnowledgeBase:
             retrievers=[sparse_retriever, dense_retriever],
             weights=[0.3, 0.7],
         )
+        self._sources = {doc.metadata["source"] for doc in documents}
         self._initialized = True
 
     def rebuild(self) -> None:
@@ -119,6 +121,10 @@ class HealthKnowledgeBase:
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
 
+    def _current_documents(self, documents: list[Document]) -> list[Document]:
+        # Persistent vector stores may still hold chunks from deleted source files.
+        return [doc for doc in documents if doc.metadata.get("source") in self._sources]
+
     async def aretrieve(self, query: str, k: int = 3) -> List[Document]:
         """
         Async hybrid retrieval — safe to call from FastAPI handlers.
@@ -127,7 +133,7 @@ class HealthKnowledgeBase:
         await self._ensure_initialized()
         assert self._retriever is not None
         results = await self._retriever.ainvoke(query)
-        return results[:k]
+        return self._current_documents(results)[:k]
 
     async def amulti_query_retrieve(self, queries: List[str], k: int = 4) -> List[Document]:
         """
@@ -152,7 +158,7 @@ class HealthKnowledgeBase:
         seen: set[str] = set()
         merged: List[Document] = []
         for docs in per_query_results:
-            for doc in docs:
+            for doc in self._current_documents(docs):
                 key = doc.page_content
                 if key not in seen:
                     seen.add(key)
@@ -171,7 +177,7 @@ class HealthKnowledgeBase:
             self._sync_init()
         assert self._retriever is not None
         results = self._retriever.invoke(query)
-        return results[:k]
+        return self._current_documents(results)[:k]
 
     # ── Formatting ────────────────────────────────────────────────────────────
 

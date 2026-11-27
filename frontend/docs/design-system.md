@@ -121,11 +121,10 @@ const t = useTextScale();
 | --- | --- |
 | `ResultCard` | 卡片外壳：白底浮起，左上图标块 + 标题，右上 `meta`（徽标或一行说明）。`tone` 决定图标块颜色；`alert` 给整张卡加危险红描边（急症） |
 | `Badge` | 状态徽标，`tone` 取 `brand / success / warning / danger / neutral` |
-| `Stat` | 浅灰小块里的"标签 + 数字"，放在 `grid` 里用 |
 | `SectionLabel` | 卡片内的小节标题 |
 | `Note` | 浅灰提示条：小贴士、说明 |
 
-语义约定：正常 / 已完成用 `success`（`Badge` 会渲染成中性灰底加绿色对勾），需要注意（偏高偏低、待确认、建议尽快就诊）用 `warning`，只有急症和危险信号用 `danger`。医保电子凭证卡是唯一用整块品牌色做底的卡片。
+语义约定：正常 / 已完成用 `success`（`Badge` 会渲染成中性灰底加绿色对勾），需要注意（偏高偏低、待确认、建议尽快就诊）用 `warning`，只有急症和危险信号用 `danger`。
 
 ## 可访问性
 

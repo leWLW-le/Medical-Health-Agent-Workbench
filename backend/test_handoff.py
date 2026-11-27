@@ -87,7 +87,6 @@ class ExitRequestMatchingTests(unittest.TestCase):
             "这个药不用了吗",
             "结束以后还要复查吗",
             "检查结束了医生让我看报告",
-            "医保卡取消绑定要去哪里办",
             "退烧药该怎么吃",
         ):
             with self.subTest(text=text):
@@ -103,10 +102,10 @@ class ExitRequestMatchingTests(unittest.TestCase):
 
 class HandoffToolTests(unittest.TestCase):
     def test_an_agent_never_gets_a_tool_pointing_at_itself(self):
-        tools = get_handoff_tools("insurance_agent")
+        tools = get_handoff_tools("report_agent")
         names = {t.name for t in tools}
         self.assertEqual(len(tools), len(AGENT_TO_NODE) - 1)
-        self.assertNotIn("transfer_to_insurance", names)
+        self.assertNotIn("transfer_to_report", names)
         self.assertIn("transfer_to_clinic", names)
         self.assertLessEqual(names, set(HANDOFF_TOOL_NAMES))
 
@@ -121,18 +120,18 @@ class HandoffToolTests(unittest.TestCase):
     def test_prompt_section_lists_only_the_other_agents(self):
         section = handoff_prompt_section("clinic_agent")
         self.assertNotIn("transfer_to_clinic", section)
-        self.assertIn("transfer_to_insurance", section)
+        self.assertIn("transfer_to_report", section)
 
     def test_destinations_cover_every_other_node(self):
         self.assertEqual(
             set(handoff_destinations("report_agent")),
-            {"clinic_node", "insurance_node", "pharmacy_node", "advisor_node"},
+            {"clinic_node", "pharmacy_node", "advisor_node"},
         )
 
     def test_non_handoff_messages_are_ignored(self):
         self.assertIsNone(handoff_target(AIMessage(content="hi")))
         self.assertIsNone(
-            handoff_target(ToolMessage(content="{}", name="get_insurance_balance", tool_call_id="x"))
+            handoff_target(ToolMessage(content="{}", name="search_drug_info", tool_call_id="x"))
         )
         self.assertIsNone(
             handoff_target(
@@ -143,13 +142,13 @@ class HandoffToolTests(unittest.TestCase):
 
 class SplitHandoffTests(unittest.TestCase):
     def test_without_a_handoff_every_message_is_kept(self):
-        messages = [AIMessage(content="您的余额是 3248.56 元。")]
+        messages = [AIMessage(content="可以记录近期的睡眠时间。")]
         target, kept = split_handoff(messages)
         self.assertIsNone(target)
         self.assertEqual(kept, messages)
 
     def test_the_requesting_ai_message_and_everything_after_it_is_dropped(self):
-        earlier = AIMessage(content="先查一下余额。")
+        earlier = AIMessage(content="我来了解一下症状。")
         request = AIMessage(
             content="",
             tool_calls=[{"name": "transfer_to_clinic", "args": {}, "id": "call_9"}],
@@ -184,27 +183,27 @@ class ApplyHandoffTests(unittest.TestCase):
     def test_command_targets_the_agent_node_and_books_the_budget(self):
         request = AIMessage(
             content="",
-            tool_calls=[{"name": "transfer_to_insurance", "args": {}, "id": "c1"}],
+            tool_calls=[{"name": "transfer_to_report", "args": {}, "id": "c1"}],
         )
         result = apply_handoff(
             {"handoff_count": 0},
-            [request, _handoff_tool_message("insurance_agent", "c1")],
+            [request, _handoff_tool_message("report_agent", "c1")],
         )
         self.assertIsInstance(result, Command)
-        self.assertEqual(result.goto, "insurance_node")
-        self.assertEqual(result.update["active_agent"], "insurance_agent")
-        self.assertEqual(result.update["next_agent"], "insurance_agent")
+        self.assertEqual(result.goto, "report_node")
+        self.assertEqual(result.update["active_agent"], "report_agent")
+        self.assertEqual(result.update["next_agent"], "report_agent")
         self.assertEqual(result.update["handoff_count"], 1)
         self.assertEqual(result.update["messages"], [])
 
     def test_the_per_turn_budget_stops_ping_pong(self):
         request = AIMessage(
             content="",
-            tool_calls=[{"name": "transfer_to_insurance", "args": {}, "id": "c1"}],
+            tool_calls=[{"name": "transfer_to_report", "args": {}, "id": "c1"}],
         )
         messages = [
             request,
-            _handoff_tool_message("insurance_agent", "c1"),
+            _handoff_tool_message("report_agent", "c1"),
             AIMessage(content="这就为您转接。"),
         ]
         result = apply_handoff({"handoff_count": MAX_HANDOFFS_PER_TURN}, messages)
@@ -303,7 +302,7 @@ class AdvisorToPharmacyHandoffTests(_GraphHandoffCase):
         result = await self._run(
             router_answer="advisor_agent",
             models={"advisor": advisor, "pharmacy": pharmacy},
-            messages=[HumanMessage(content="医保能报销布洛芬吗？")],
+            messages=[HumanMessage(content="布洛芬主要用来做什么？")],
             active_agent="advisor_agent",
         )
 

@@ -7,6 +7,7 @@ correct specialized agent. This is the entry point of the main graph.
 import re
 
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
+from agents.handoff import AGENT_TO_NODE
 from agents.state import MainAgentState
 from agents.llm import get_chat_llm
 
@@ -15,10 +16,9 @@ ROUTER_SYSTEM_PROMPT = """你是一个医疗健康 Agent 工作台中的"智能�
 
 请你严格回复以下指定字符串选项之一，不要回答多余的废话，只回复分类 ID 字符串：
 1. "clinic_agent" - 用户描述了具体的身体不适、症状，寻求如何就医、看什么科或者询问可能得了什么病。
-2. "insurance_agent" - 用户询问个人医保余额、报销、消费明细等医保事务，提供官方查询指引。
-3. "report_agent" - 用户让你帮忙看看化验单、检查报告，或者解读检查指标。
-4. "pharmacy_agent" - 用户询问药品信息（用法用量、副作用、说明书）、药物相互作用、找附近药店、或者根据症状推荐非处方药。
-5. "advisor_agent" - 其它通用健康科普、饮食作息建议或者打招呼问候。
+2. "report_agent" - 用户让你帮忙看看化验单、检查报告，或者解读检查指标。
+3. "pharmacy_agent" - 用户询问药品信息（用法用量、副作用、说明书）、药物相互作用、找附近药店、或者根据症状推荐非处方药。
+4. "advisor_agent" - 其它通用健康科普、饮食作息建议或者打招呼问候。
 
 只回复分类 ID 字符串，不要任何其他内容。"""
 
@@ -131,7 +131,7 @@ async def router_node(state: MainAgentState) -> dict:
             "handoff_count": 0,
         }
     
-    if active_agent and active_agent not in ("advisor_agent", ""):
+    if active_agent in AGENT_TO_NODE and active_agent != "advisor_agent":
         print(f"--- [Router] Short-circuit: already in {active_agent}, bypassing LLM classification ---", flush=True)
         return {"next_agent": active_agent, "handoff_count": 0}
 
@@ -163,8 +163,6 @@ async def router_node(state: MainAgentState) -> dict:
         # Robust substring matching
         if "clinic_agent" in raw_clean:
             next_agent = "clinic_agent"
-        elif "insurance_agent" in raw_clean:
-            next_agent = "insurance_agent"
         elif "report_agent" in raw_clean:
             next_agent = "report_agent"
         elif "pharmacy_agent" in raw_clean:

@@ -2,7 +2,7 @@
 Swarm-style handoffs between the specialist agents.
 
 Why not ``Command(goto=..., graph=Command.PARENT)`` straight from the tool?
-Four of the five specialists are plain node *functions* that call
+Three of the four specialists are plain node *functions* that call
 ``create_react_agent(...).ainvoke(...)`` internally. That inner agent is its own
 Pregel run, so a ``Command`` raised inside one of its tools can only reach that
 inner graph — never the master graph. The robust pattern used here instead:
@@ -33,7 +33,6 @@ from langgraph.types import Command
 # Agent id (the value kept in ``MainAgentState['active_agent']``) → graph node.
 AGENT_TO_NODE: dict[str, str] = {
     "clinic_agent": "clinic_node",
-    "insurance_agent": "insurance_node",
     "report_agent": "report_node",
     "pharmacy_agent": "pharmacy_node",
     "advisor_agent": "advisor_node",
@@ -44,10 +43,6 @@ _HANDOFF_SPECS: dict[str, tuple[str, str]] = {
     "clinic_agent": (
         "transfer_to_clinic",
         "预问诊助手：用户描述身体不适或症状，想知道该看哪个科、是否需要就医。",
-    ),
-    "insurance_agent": (
-        "transfer_to_insurance",
-        "医保查询指引：用户要求查询个人账户余额、缴费或消费记录时，引导到官方服务。",
     ),
     "report_agent": (
         "transfer_to_report",
@@ -73,7 +68,6 @@ HANDOFF_TOOL_NAMES: frozenset[str] = frozenset(
 # tool name → the display label main.py shows while the transfer runs.
 HANDOFF_TOOL_LABELS: dict[str, str] = {
     "transfer_to_clinic": "正在转接预问诊助手…",
-    "transfer_to_insurance": "正在提供医保官方查询指引…",
     "transfer_to_report": "正在转接报告解读助手…",
     "transfer_to_pharmacy": "正在转接用药咨询助手…",
     "transfer_to_advisor": "正在转接健康顾问…",

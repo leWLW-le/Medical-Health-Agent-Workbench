@@ -147,7 +147,6 @@ export const GlobalProvider = ({ children, serverAccount }: { children: ReactNod
         updateConversation(workspace, activeConversationId, current => ({ ...current, threadId: id }));
     }, [workspace, activeConversationId, updateConversation]);
     const setAgentMode = useCallback((mode: ChatMode) => {
-        if (mode === 'insurance') return;
         updateConversation(workspace, activeConversationId, current => ({ ...current, agentMode: mode }));
     }, [workspace, activeConversationId, updateConversation]);
     const clearConversation = async () => {
